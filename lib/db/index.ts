@@ -31,11 +31,17 @@ async function initDb(): Promise<DB> {
       "DATABASE_URL is not set. Add your Supabase connection string to .env.local.",
     );
   }
+  const sslDisabled = /[?&]sslmode=disable\b/.test(databaseUrl);
+  // Strip sslmode= so pg-connection-string doesn't override our explicit ssl
+  // config — Supabase's pooler chain fails Node's default verification.
+  const cleanedUrl = (() => {
+    const u = new URL(databaseUrl);
+    u.searchParams.delete("sslmode");
+    return u.toString();
+  })();
   const pool = new Pool({
-    connectionString: databaseUrl,
-    ssl: databaseUrl.includes("sslmode=disable")
-      ? false
-      : { rejectUnauthorized: false },
+    connectionString: cleanedUrl,
+    ssl: sslDisabled ? false : { rejectUnauthorized: false },
   });
   return drizzle(pool, { schema, casing: "snake_case" });
 }
