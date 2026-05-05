@@ -5,9 +5,12 @@ import {
   latestBalancePerAccount,
   listCashAccounts,
   listCategories,
+  listExpensesForMonth,
   spendByCategoryForMonth,
   totalSpendForMonth,
 } from "@/lib/queries";
+import { getAccountBalances } from "@/lib/db/queries/account-balance";
+import { monthSeries } from "@/lib/reports";
 import { formatCents } from "@/lib/money";
 import {
   currentYearMonth,
@@ -18,7 +21,11 @@ import { PlusIcon } from "lucide-react";
 import { BudgetBars } from "@/components/charts/budget-bars";
 import { InvestmentTrendChart } from "@/components/charts/investment-trend";
 import { ExpenseDonut } from "@/components/charts/expense-donut";
+import { CashflowMiniChart } from "@/components/charts/cashflow-mini-chart";
 import { BillReminders } from "@/components/bill-reminders";
+import { CashOnHandPanel } from "@/components/dashboard/cash-on-hand-panel";
+import { RecentOutlaysPanel } from "@/components/dashboard/recent-outlays-panel";
+import { IncomeSourcesPanel } from "@/components/dashboard/income-sources-panel";
 import { Button } from "@/components/ui/button";
 import { ExpenseFormDialog } from "@/components/forms/expense-form";
 
@@ -41,6 +48,9 @@ export default async function Home({
     latestBalances,
     series,
     cashAccounts,
+    expenses,
+    accountBalances,
+    cashflow,
   ] = await Promise.all([
     activeIncomeForMonth(month),
     billsWithPaymentStatus(month),
@@ -50,6 +60,9 @@ export default async function Home({
     latestBalancePerAccount(),
     investmentTotalSeries(),
     listCashAccounts(),
+    listExpensesForMonth(month),
+    getAccountBalances(),
+    monthSeries(12),
   ]);
   const accountOptions = cashAccounts.map((a) => ({
     id: a.id,
@@ -67,6 +80,7 @@ export default async function Home({
     latestBalances as Array<{ balance_cents: number | null }>
   ).reduce((s, r) => s + (r.balance_cents ?? 0), 0);
   const net = incomeTotal - spend - billsTotal;
+  const cashTotal = accountBalances.reduce((s, b) => s + b.balanceCents, 0);
 
   const spendByCat = new Map<
     number | null,
@@ -125,8 +139,20 @@ export default async function Home({
     .filter((s) => s.value > 0)
     .sort((a, b) => b.value - a.value);
 
+  const recentExpenses = expenses.map((row) => ({
+    expense: {
+      id: row.expense.id,
+      occurredOn: row.expense.occurredOn,
+      description: row.expense.description,
+      amountCents: row.expense.amountCents,
+    },
+    category: row.category
+      ? { name: row.category.name, color: row.category.color }
+      : null,
+  }));
+
   return (
-    <div className="flex flex-col gap-6 sm:gap-10 max-w-[1200px]">
+    <div className="flex flex-col gap-6 sm:gap-10">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6 pb-4 border-b border-border">
         <div className="flex items-end gap-4">
           <div className="flex flex-col gap-1">
@@ -186,7 +212,7 @@ export default async function Home({
         />
       </section>
 
-      <section className="grid grid-cols-1 gap-4 sm:gap-6 items-stretch">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
         <Panel
           eyebrow="Folio II"
           title="Outlays"
@@ -197,6 +223,7 @@ export default async function Home({
                 ? formatCents(spend, { whole: true })
                 : undefined
           }
+          className="lg:col-span-8"
         >
           <div className="grid grid-cols-1 md:grid-cols-[minmax(220px,1fr)_2fr] gap-6 md:gap-8 h-full">
             <div className="flex flex-col gap-2 min-w-0">
@@ -221,13 +248,50 @@ export default async function Home({
               ? `${billsUnpaidCount} due`
               : `${bills.length} settled`
           }
+          className="lg:col-span-4"
         >
           <BillReminders rows={bills} yearMonth={month} />
         </Panel>
+
+        <Panel
+          eyebrow="Folio VI"
+          title="Cashflow, trailing 12"
+          aside="earnings · outlays · bills"
+          className="hidden lg:flex lg:col-span-8"
+        >
+          <CashflowMiniChart data={cashflow} />
+        </Panel>
+        <Panel
+          eyebrow="Folio V"
+          title="Cash on hand"
+          aside={formatCents(cashTotal, { whole: true })}
+          className="hidden lg:flex lg:col-span-4"
+        >
+          <CashOnHandPanel balances={accountBalances} />
+        </Panel>
+
+        <Panel
+          eyebrow="Folio II"
+          title="Recent outlays"
+          aside={`${expenses.length} ${expenses.length === 1 ? "entry" : "entries"}`}
+          className="hidden lg:flex lg:col-span-6"
+        >
+          <RecentOutlaysPanel rows={recentExpenses} yearMonth={month} />
+        </Panel>
+        <Panel
+          eyebrow="Folio IV"
+          title="Earnings, by source"
+          aside={`${income.length} active`}
+          className="hidden lg:flex lg:col-span-6"
+        >
+          <IncomeSourcesPanel sources={income} yearMonth={month} />
+        </Panel>
+
         <Panel
           eyebrow="Folio V"
           title="Capital, ascending"
           aside={`${(series as unknown[]).length} entries`}
+          className="lg:col-span-12"
         >
           <InvestmentTrendChart
             data={series as Array<{ as_of: string; total_cents: number }>}
