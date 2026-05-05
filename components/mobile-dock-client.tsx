@@ -4,11 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarDaysIcon,
   HomeIcon,
   MenuIcon,
   PlusIcon,
   ReceiptIcon,
+  WalletIcon,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -72,9 +72,9 @@ export function MobileDockClient({
           />
         </li>
         <DockLink
-          href="/bills"
-          icon={CalendarDaysIcon}
-          label="Bills"
+          href="/accounts"
+          icon={WalletIcon}
+          label="Accounts"
           pathname={pathname}
         />
         <li>

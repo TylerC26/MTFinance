@@ -36,7 +36,7 @@ export default function RootLayout({
         <div className="relative z-10">{children}</div>
         <Toaster
           richColors
-          position="bottom-right"
+          position="top-center"
           toastOptions={{
             classNames: { toast: "font-sans" },
           }}
