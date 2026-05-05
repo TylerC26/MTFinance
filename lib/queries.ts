@@ -123,6 +123,14 @@ export async function totalSpendForMonth(ym: YearMonth): Promise<number> {
   return row?.total ?? 0;
 }
 
+export async function listCashAccounts() {
+  return db
+    .select()
+    .from(schema.cashAccounts)
+    .where(eq(schema.cashAccounts.archived, false))
+    .orderBy(asc(schema.cashAccounts.id));
+}
+
 export async function listInvestmentAccounts() {
   return db
     .select()

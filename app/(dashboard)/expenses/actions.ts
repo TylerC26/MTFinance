@@ -13,6 +13,9 @@ const upsertSchema = z.object({
   categoryId: z
     .union([z.coerce.number().int(), z.literal(""), z.null(), z.undefined()])
     .transform((v) => (v === "" || v == null ? null : (v as number))),
+  accountId: z
+    .union([z.coerce.number().int(), z.literal(""), z.null(), z.undefined()])
+    .transform((v) => (v === "" || v == null ? null : (v as number))),
   payer: z
     .union([z.string(), z.null(), z.undefined()])
     .transform((v) => (v && v !== "" ? v : null)),
@@ -26,21 +29,37 @@ export async function upsertExpense(input: unknown): Promise<UpsertExpenseResult
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  const { id, occurredOn, amount, categoryId, payer, description } = parsed.data;
+  const { id, occurredOn, amount, categoryId, accountId, payer, description } =
+    parsed.data;
+  const resolvedAccountId =
+    accountId ?? (payer ? await accountIdForOwner(payer) : null);
   const amountCents = dollarsToCents(amount);
   if (id) {
     await db
       .update(schema.expenses)
-      .set({ occurredOn, amountCents, categoryId, payer, description })
+      .set({
+        occurredOn,
+        amountCents,
+        categoryId,
+        accountId: resolvedAccountId,
+        payer,
+        description,
+      })
       .where(eq(schema.expenses.id, id));
   } else {
-    await db
-      .insert(schema.expenses)
-      .values({ occurredOn, amountCents, categoryId, payer, description });
+    await db.insert(schema.expenses).values({
+      occurredOn,
+      amountCents,
+      categoryId,
+      accountId: resolvedAccountId,
+      payer,
+      description,
+    });
   }
   revalidatePath("/expenses");
   revalidatePath("/");
   revalidatePath("/reports");
+  revalidatePath("/accounts");
   return { ok: true };
 }
 
@@ -49,6 +68,7 @@ export async function deleteExpense(id: number) {
   revalidatePath("/expenses");
   revalidatePath("/");
   revalidatePath("/reports");
+  revalidatePath("/accounts");
 }
 
 const bulkInsertSchema = z.array(upsertSchema.omit({ id: true })).min(1);
@@ -64,16 +84,33 @@ export async function bulkInsertExpenses(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  const rows = parsed.data.map(({ occurredOn, amount, categoryId, payer, description }) => ({
-    occurredOn,
-    amountCents: dollarsToCents(amount),
-    categoryId,
-    payer,
-    description,
-  }));
+  const ownerToAccount = await loadOwnerToAccountMap();
+  const rows = parsed.data.map(
+    ({ occurredOn, amount, categoryId, accountId, payer, description }) => ({
+      occurredOn,
+      amountCents: dollarsToCents(amount),
+      categoryId,
+      accountId: accountId ?? (payer ? ownerToAccount.get(payer) ?? null : null),
+      payer,
+      description,
+    }),
+  );
   await db.insert(schema.expenses).values(rows);
   revalidatePath("/expenses");
   revalidatePath("/");
   revalidatePath("/reports");
+  revalidatePath("/accounts");
   return { ok: true, count: rows.length };
+}
+
+async function loadOwnerToAccountMap(): Promise<Map<string, number>> {
+  const rows = await db
+    .select({ id: schema.cashAccounts.id, owner: schema.cashAccounts.owner })
+    .from(schema.cashAccounts);
+  return new Map(rows.map((r) => [r.owner, r.id]));
+}
+
+async function accountIdForOwner(owner: string): Promise<number | null> {
+  const map = await loadOwnerToAccountMap();
+  return map.get(owner) ?? null;
 }

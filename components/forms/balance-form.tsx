@@ -97,8 +97,14 @@ export function BalanceFormDialog({
               value={form.watch("accountId")}
               onValueChange={(v) => form.setValue("accountId", v ?? "")}
             >
-              <SelectTrigger id="accountId">
-                <SelectValue placeholder="Select account" />
+              <SelectTrigger id="accountId" className="w-full">
+                <SelectValue placeholder="Select account">
+                  {(value: string | null) => {
+                    if (!value) return "Select account";
+                    const a = accounts.find((a) => String(a.id) === value);
+                    return a?.name ?? "Select account";
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {accounts.map((a) => (

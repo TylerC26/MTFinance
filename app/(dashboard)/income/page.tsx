@@ -1,6 +1,10 @@
 import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { format } from "date-fns";
-import { listIncomeSources, activeIncomeForMonth } from "@/lib/queries";
+import {
+  activeIncomeForMonth,
+  listCashAccounts,
+  listIncomeSources,
+} from "@/lib/queries";
 import { centsToDollars, formatCents } from "@/lib/money";
 import {
   currentYearMonth,
@@ -31,12 +35,18 @@ export default async function IncomePage({
   const monthRaw = sp.month;
   const month =
     monthRaw && isValidYearMonth(monthRaw) ? monthRaw : currentYearMonth();
-  const [all, active] = await Promise.all([
+  const [all, active, cashAccounts] = await Promise.all([
     listIncomeSources(),
     activeIncomeForMonth(month),
+    listCashAccounts(),
   ]);
   const activeIds = new Set(active.map((i) => i.id));
   const monthlyTotal = active.reduce((sum, i) => sum + i.amountCents, 0);
+  const accountOptions = cashAccounts.map((a) => ({
+    id: a.id,
+    name: a.name,
+    owner: a.owner,
+  }));
 
   return (
     <div className="flex flex-col gap-8 max-w-[1100px]">
@@ -56,6 +66,7 @@ export default async function IncomePage({
         }
         action={
           <IncomeFormDialog
+            accounts={accountOptions}
             trigger={
               <Button>
                 <PlusIcon /> New source
@@ -106,11 +117,13 @@ export default async function IncomePage({
                 </div>
                 <div className="flex justify-end gap-1">
                   <IncomeFormDialog
+                    accounts={accountOptions}
                     defaults={{
                       id: i.id,
                       name: i.name,
                       amount: centsToDollars(i.amountCents),
                       payer: i.payer as "tyler" | "wife" | "joint",
+                      accountId: i.accountId,
                       startMonth: i.startMonth.slice(0, 7),
                       endMonth: i.endMonth ? i.endMonth.slice(0, 7) : null,
                       notes: i.notes,
@@ -201,11 +214,13 @@ export default async function IncomePage({
                   <TableCell>
                     <div className="flex justify-end gap-1">
                       <IncomeFormDialog
+                        accounts={accountOptions}
                         defaults={{
                           id: i.id,
                           name: i.name,
                           amount: centsToDollars(i.amountCents),
                           payer: i.payer as "tyler" | "wife" | "joint",
+                          accountId: i.accountId,
                           startMonth: i.startMonth.slice(0, 7),
                           endMonth: i.endMonth ? i.endMonth.slice(0, 7) : null,
                           notes: i.notes,

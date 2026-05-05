@@ -11,12 +11,16 @@ export function PaidToggle({
   yearMonth,
   amountCents,
   paid,
+  accountId,
+  defaultAccountId,
   className,
 }: {
   billId: number;
   yearMonth: string;
   amountCents: number;
   paid: boolean;
+  accountId: number | null;
+  defaultAccountId: number | null;
   className?: string;
 }) {
   const [pending, startTransition] = React.useTransition();
@@ -29,10 +33,11 @@ export function PaidToggle({
       disabled={pending}
       onClick={() => {
         const next = !display;
+        const acct = next ? (accountId ?? defaultAccountId) : null;
         startTransition(async () => {
           setOptimisticPaid(next);
           try {
-            await setBillPaid(billId, yearMonth, next, amountCents);
+            await setBillPaid(billId, yearMonth, next, amountCents, acct);
             toast.success(next ? "Marked paid" : "Marked unpaid");
           } catch {
             toast.error("Failed to update");

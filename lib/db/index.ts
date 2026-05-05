@@ -54,11 +54,28 @@ const SCHEMA_SQL = `
     monthly_budget_cents bigint NOT NULL DEFAULT 0,
     archived boolean NOT NULL DEFAULT false
   );
+  CREATE TABLE IF NOT EXISTS cash_accounts (
+    id serial PRIMARY KEY,
+    name text NOT NULL,
+    owner text NOT NULL,
+    opening_balance_cents bigint NOT NULL DEFAULT 0,
+    opening_as_of date NOT NULL,
+    archived boolean NOT NULL DEFAULT false
+  );
+  CREATE TABLE IF NOT EXISTS transfers (
+    id serial PRIMARY KEY,
+    from_account_id integer NOT NULL REFERENCES cash_accounts(id) ON DELETE CASCADE,
+    to_account_id integer NOT NULL REFERENCES cash_accounts(id) ON DELETE CASCADE,
+    amount_cents bigint NOT NULL,
+    occurred_on date NOT NULL,
+    notes text NOT NULL DEFAULT ''
+  );
   CREATE TABLE IF NOT EXISTS income_sources (
     id serial PRIMARY KEY,
     name text NOT NULL,
     amount_cents bigint NOT NULL,
     payer text NOT NULL DEFAULT 'joint',
+    account_id integer REFERENCES cash_accounts(id) ON DELETE SET NULL,
     start_month date NOT NULL,
     end_month date,
     notes text NOT NULL DEFAULT ''
@@ -78,7 +95,8 @@ const SCHEMA_SQL = `
     bill_id integer NOT NULL REFERENCES bills(id) ON DELETE CASCADE,
     year_month text NOT NULL,
     paid_on date NOT NULL,
-    amount_cents bigint NOT NULL
+    amount_cents bigint NOT NULL,
+    account_id integer REFERENCES cash_accounts(id) ON DELETE SET NULL
   );
   CREATE UNIQUE INDEX IF NOT EXISTS bill_payments_bill_month_idx
     ON bill_payments (bill_id, year_month);
@@ -87,6 +105,7 @@ const SCHEMA_SQL = `
     occurred_on date NOT NULL,
     amount_cents bigint NOT NULL,
     category_id integer REFERENCES categories(id) ON DELETE SET NULL,
+    account_id integer REFERENCES cash_accounts(id) ON DELETE SET NULL,
     payer text,
     description text NOT NULL DEFAULT '',
     notes text NOT NULL DEFAULT ''

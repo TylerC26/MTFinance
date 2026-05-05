@@ -19,12 +19,18 @@ import {
 } from "@/components/ui/dialog";
 import { currentYearMonth } from "@/lib/dates";
 import { PayerSelector } from "./payer-selector";
+import {
+  AccountSelector,
+  ownerToAccountId,
+  type AccountOption,
+} from "./account-selector";
 
 type Defaults = {
   id?: number;
   name?: string;
   amount?: number;
   payer?: "tyler" | "wife" | "joint";
+  accountId?: number | null;
   startMonth?: string;
   endMonth?: string | null;
   notes?: string;
@@ -34,6 +40,7 @@ type Values = {
   name: string;
   amount: number;
   payer: "tyler" | "wife" | "joint";
+  accountId: string;
   startMonth: string;
   endMonth: string;
   notes: string;
@@ -41,18 +48,25 @@ type Values = {
 
 export function IncomeFormDialog({
   trigger,
+  accounts,
   defaults,
 }: {
   trigger: React.ReactNode;
+  accounts: AccountOption[];
   defaults?: Defaults;
 }) {
   const [open, setOpen] = React.useState(false);
   const isEdit = Boolean(defaults?.id);
+  const initialAccountId = (d: Defaults | undefined): string => {
+    if (d?.accountId != null) return String(d.accountId);
+    return ownerToAccountId(d?.payer ?? "joint", accounts);
+  };
   const form = useForm<Values>({
     defaultValues: {
       name: defaults?.name ?? "",
       amount: defaults?.amount ?? 0,
       payer: defaults?.payer ?? "joint",
+      accountId: initialAccountId(defaults),
       startMonth: defaults?.startMonth ?? currentYearMonth(),
       endMonth: defaults?.endMonth ?? "",
       notes: defaults?.notes ?? "",
@@ -65,15 +79,21 @@ export function IncomeFormDialog({
         name: defaults?.name ?? "",
         amount: defaults?.amount ?? 0,
         payer: defaults?.payer ?? "joint",
+        accountId: initialAccountId(defaults),
         startMonth: defaults?.startMonth ?? currentYearMonth(),
         endMonth: defaults?.endMonth ?? "",
         notes: defaults?.notes ?? "",
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, defaults, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const res = await upsertIncome({ ...values, id: defaults?.id });
+    const res = await upsertIncome({
+      ...values,
+      id: defaults?.id,
+      accountId: values.accountId === "" ? null : Number(values.accountId),
+    });
     if (!res.ok) {
       toast.error(res.error);
       return;
@@ -116,9 +136,19 @@ export function IncomeFormDialog({
           <FormField id="payer" label="Earner">
             <PayerSelector
               value={form.watch("payer")}
-              onChange={(v) =>
-                form.setValue("payer", (v || "joint") as Values["payer"])
-              }
+              onChange={(v) => {
+                const next = (v || "joint") as Values["payer"];
+                form.setValue("payer", next);
+                const id = ownerToAccountId(next, accounts);
+                if (id) form.setValue("accountId", id);
+              }}
+            />
+          </FormField>
+          <FormField id="accountId" label="Deposit account">
+            <AccountSelector
+              value={form.watch("accountId")}
+              onChange={(v) => form.setValue("accountId", v)}
+              accounts={accounts}
             />
           </FormField>
           <div className="grid grid-cols-2 gap-3">

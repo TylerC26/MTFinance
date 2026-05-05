@@ -136,8 +136,14 @@ export function BillFormDialog({
                 value={form.watch("categoryId")}
                 onValueChange={(v) => form.setValue("categoryId", v ?? "")}
               >
-                <SelectTrigger id="categoryId">
-                  <SelectValue placeholder="—" />
+                <SelectTrigger id="categoryId" className="w-full">
+                  <SelectValue placeholder="—">
+                    {(value: string | null) => {
+                      if (!value) return "—";
+                      const c = categories.find((c) => String(c.id) === value);
+                      return c?.name ?? "—";
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">—</SelectItem>

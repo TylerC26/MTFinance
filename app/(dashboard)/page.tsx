@@ -3,6 +3,7 @@ import {
   billsWithPaymentStatus,
   investmentTotalSeries,
   latestBalancePerAccount,
+  listCashAccounts,
   listCategories,
   spendByCategoryForMonth,
   totalSpendForMonth,
@@ -31,16 +32,30 @@ export default async function Home({
   const sp = await searchParams;
   const monthRaw = sp.month;
   const month = monthRaw && isValidYearMonth(monthRaw) ? monthRaw : currentYearMonth();
-  const [income, bills, spend, byCategory, categories, latestBalances, series] =
-    await Promise.all([
-      activeIncomeForMonth(month),
-      billsWithPaymentStatus(month),
-      totalSpendForMonth(month),
-      spendByCategoryForMonth(month),
-      listCategories(),
-      latestBalancePerAccount(),
-      investmentTotalSeries(),
-    ]);
+  const [
+    income,
+    bills,
+    spend,
+    byCategory,
+    categories,
+    latestBalances,
+    series,
+    cashAccounts,
+  ] = await Promise.all([
+    activeIncomeForMonth(month),
+    billsWithPaymentStatus(month),
+    totalSpendForMonth(month),
+    spendByCategoryForMonth(month),
+    listCategories(),
+    latestBalancePerAccount(),
+    investmentTotalSeries(),
+    listCashAccounts(),
+  ]);
+  const accountOptions = cashAccounts.map((a) => ({
+    id: a.id,
+    name: a.name,
+    owner: a.owner,
+  }));
 
   const incomeTotal = income.reduce((s, i) => s + i.amountCents, 0);
   const billsTotal = bills.reduce((s, b) => s + b.bill.amountCents, 0);
@@ -122,6 +137,7 @@ export default async function Home({
           </div>
           <ExpenseFormDialog
             categories={expenseCategories}
+            accounts={accountOptions}
             trigger={
               <Button size="sm">
                 <PlusIcon /> Log expense

@@ -31,6 +31,11 @@ import { ExpenseReceiptTab } from "./expense-receipt-tab";
 import { ExpenseApplePayTab } from "./expense-apple-pay-tab";
 import { PayerSelector } from "./payer-selector";
 import { CategorySelector } from "./category-selector";
+import {
+  AccountSelector,
+  ownerToAccountId,
+  type AccountOption,
+} from "./account-selector";
 
 export type Category = { id: number; name: string };
 
@@ -39,6 +44,7 @@ export type ExpenseDefaults = {
   occurredOn?: string;
   amount?: number;
   categoryId?: number | null;
+  accountId?: number | null;
   payer?: string | null;
   description?: string;
 };
@@ -47,6 +53,7 @@ type Values = {
   occurredOn: string;
   amount: number;
   categoryId: string;
+  accountId: string;
   payer: string;
   description: string;
 };
@@ -77,6 +84,7 @@ function defaultValues(d?: ExpenseDefaults): Values {
     occurredOn: d?.occurredOn ?? todayIso(),
     amount: d?.amount ?? 0,
     categoryId: d?.categoryId != null ? String(d.categoryId) : "",
+    accountId: d?.accountId != null ? String(d.accountId) : "",
     payer: d?.payer ?? "",
     description: d?.description ?? "",
   };
@@ -84,10 +92,12 @@ function defaultValues(d?: ExpenseDefaults): Values {
 
 function ManualExpenseForm({
   categories,
+  accounts,
   defaults,
   onSuccess,
 }: {
   categories: Category[];
+  accounts: AccountOption[];
   defaults?: ExpenseDefaults;
   onSuccess: () => void;
 }) {
@@ -98,11 +108,21 @@ function ManualExpenseForm({
     form.reset(defaultValues(defaults));
   }, [defaults, form]);
 
+  const watchedPayer = form.watch("payer");
+  const watchedAccountId = form.watch("accountId");
+  React.useEffect(() => {
+    if (!watchedAccountId && watchedPayer) {
+      const id = ownerToAccountId(watchedPayer, accounts);
+      if (id) form.setValue("accountId", id);
+    }
+  }, [watchedPayer, watchedAccountId, accounts, form]);
+
   const onSubmit = form.handleSubmit(async (values) => {
     const res = await upsertExpense({
       ...values,
       id: defaults?.id,
       categoryId: values.categoryId === "" ? null : Number(values.categoryId),
+      accountId: values.accountId === "" ? null : Number(values.accountId),
       payer: values.payer || null,
     });
     if (!res.ok) {
@@ -156,7 +176,18 @@ function ManualExpenseForm({
       <FormField id="payer" label="Paid by">
         <PayerSelector
           value={form.watch("payer")}
-          onChange={(v) => form.setValue("payer", v)}
+          onChange={(v) => {
+            form.setValue("payer", v);
+            const id = ownerToAccountId(v, accounts);
+            if (id) form.setValue("accountId", id);
+          }}
+        />
+      </FormField>
+      <FormField id="accountId" label="Account">
+        <AccountSelector
+          value={form.watch("accountId")}
+          onChange={(v) => form.setValue("accountId", v)}
+          accounts={accounts}
         />
       </FormField>
       <DialogFooter>
@@ -194,10 +225,12 @@ function MethodSelector({ onPick }: { onPick: (s: Exclude<Step, "select">) => vo
 export function ExpenseFormDialog({
   trigger,
   categories,
+  accounts,
   defaults,
 }: {
   trigger: React.ReactNode;
   categories: Category[];
+  accounts: AccountOption[];
   defaults?: ExpenseDefaults;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -235,7 +268,11 @@ export function ExpenseFormDialog({
       <DialogTrigger render={trigger as React.ReactElement} />
       <DialogContent
         className={
-          step === "apple-pay" || step === "select" ? "sm:max-w-2xl" : undefined
+          step === "apple-pay"
+            ? "sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+            : step === "select"
+              ? "sm:max-w-2xl"
+              : undefined
         }
       >
         <DialogHeader>
@@ -259,6 +296,7 @@ export function ExpenseFormDialog({
         ) : step === "manual" ? (
           <ManualExpenseForm
             categories={categories}
+            accounts={accounts}
             defaults={isEdit ? defaults : manualDefaults}
             onSuccess={close}
           />
@@ -267,7 +305,11 @@ export function ExpenseFormDialog({
         ) : step === "receipt" ? (
           <ExpenseReceiptTab categories={categories} onPrefill={prefillManual} />
         ) : (
-          <ExpenseApplePayTab categories={categories} onSaved={close} />
+          <ExpenseApplePayTab
+            categories={categories}
+            accounts={accounts}
+            onSaved={close}
+          />
         )}
       </DialogContent>
     </Dialog>

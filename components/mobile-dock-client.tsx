@@ -23,9 +23,16 @@ import {
   ExpenseFormDialog,
   type Category,
 } from "@/components/forms/expense-form";
+import type { AccountOption } from "@/components/forms/account-selector";
 import { cn } from "@/lib/utils";
 
-export function MobileDockClient({ categories }: { categories: Category[] }) {
+export function MobileDockClient({
+  categories,
+  accounts,
+}: {
+  categories: Category[];
+  accounts: AccountOption[];
+}) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = React.useState(false);
 
@@ -52,6 +59,7 @@ export function MobileDockClient({ categories }: { categories: Category[] }) {
         <li className="relative flex h-full items-start justify-center">
           <ExpenseFormDialog
             categories={categories}
+            accounts={accounts}
             trigger={
               <button
                 type="button"

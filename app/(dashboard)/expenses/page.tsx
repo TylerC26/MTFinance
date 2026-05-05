@@ -1,6 +1,10 @@
 import { PlusIcon, PencilIcon, Trash2Icon } from "lucide-react";
 import { format } from "date-fns";
-import { listCategories, listExpensesForMonth } from "@/lib/queries";
+import {
+  listCashAccounts,
+  listCategories,
+  listExpensesForMonth,
+} from "@/lib/queries";
 import { centsToDollars, formatCents } from "@/lib/money";
 import {
   currentYearMonth,
@@ -31,11 +35,18 @@ export default async function ExpensesPage({
   const monthRaw = sp.month;
   const month =
     monthRaw && isValidYearMonth(monthRaw) ? monthRaw : currentYearMonth();
-  const [categories, expenses] = await Promise.all([
+  const [categories, expenses, cashAccounts] = await Promise.all([
     listCategories(),
     listExpensesForMonth(month),
+    listCashAccounts(),
   ]);
   const activeCategories = categories.filter((c) => !c.archived);
+  const accountOptions = cashAccounts.map((a) => ({
+    id: a.id,
+    name: a.name,
+    owner: a.owner,
+  }));
+  const accountNameById = new Map(cashAccounts.map((a) => [a.id, a.name]));
   const total = expenses.reduce(
     (sum, { expense }) => sum + expense.amountCents,
     0,
@@ -63,6 +74,7 @@ export default async function ExpensesPage({
               id: c.id,
               name: c.name,
             }))}
+            accounts={accountOptions}
             trigger={
               <Button>
                 <PlusIcon /> Log expense
@@ -106,9 +118,11 @@ export default async function ExpensesPage({
                       </span>
                     ) : null}
                     <span>
-                      {expense.payer === "wife"
-                        ? "michelle"
-                        : (expense.payer ?? "—")}
+                      {expense.accountId != null
+                        ? (accountNameById.get(expense.accountId) ?? "—")
+                        : expense.payer === "wife"
+                          ? "michelle"
+                          : (expense.payer ?? "—")}
                     </span>
                   </div>
                 </div>
@@ -122,11 +136,13 @@ export default async function ExpensesPage({
                     id: c.id,
                     name: c.name,
                   }))}
+                  accounts={accountOptions}
                   defaults={{
                     id: expense.id,
                     occurredOn: expense.occurredOn,
                     amount: centsToDollars(expense.amountCents),
                     categoryId: expense.categoryId,
+                    accountId: expense.accountId,
                     payer: expense.payer,
                     description: expense.description,
                   }}
@@ -159,7 +175,7 @@ export default async function ExpensesPage({
                 Category
               </TableHead>
               <TableHead className="eyebrow !text-muted-foreground">
-                Paid by
+                Account
               </TableHead>
               <TableHead className="text-right eyebrow !text-muted-foreground">
                 Amount
@@ -204,7 +220,11 @@ export default async function ExpensesPage({
                     )}
                   </TableCell>
                   <TableCell className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                    {expense.payer === "wife" ? "michelle" : (expense.payer ?? "—")}
+                    {expense.accountId != null
+                      ? (accountNameById.get(expense.accountId) ?? "—")
+                      : expense.payer === "wife"
+                        ? "michelle"
+                        : (expense.payer ?? "—")}
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
                     {formatCents(expense.amountCents)}
@@ -216,11 +236,13 @@ export default async function ExpensesPage({
                           id: c.id,
                           name: c.name,
                         }))}
+                        accounts={accountOptions}
                         defaults={{
                           id: expense.id,
                           occurredOn: expense.occurredOn,
                           amount: centsToDollars(expense.amountCents),
                           categoryId: expense.categoryId,
+                          accountId: expense.accountId,
                           payer: expense.payer,
                           description: expense.description,
                         }}

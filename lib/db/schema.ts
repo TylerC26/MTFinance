@@ -20,11 +20,38 @@ export const categories = pgTable("categories", {
   archived: boolean("archived").notNull().default(false),
 });
 
+export const cashAccounts = pgTable("cash_accounts", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  owner: text("owner").notNull(),
+  openingBalanceCents: bigint("opening_balance_cents", { mode: "number" })
+    .notNull()
+    .default(0),
+  openingAsOf: date("opening_as_of").notNull(),
+  archived: boolean("archived").notNull().default(false),
+});
+
+export const transfers = pgTable("transfers", {
+  id: serial("id").primaryKey(),
+  fromAccountId: integer("from_account_id")
+    .notNull()
+    .references(() => cashAccounts.id, { onDelete: "cascade" }),
+  toAccountId: integer("to_account_id")
+    .notNull()
+    .references(() => cashAccounts.id, { onDelete: "cascade" }),
+  amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
+  occurredOn: date("occurred_on").notNull(),
+  notes: text("notes").notNull().default(""),
+});
+
 export const incomeSources = pgTable("income_sources", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
   payer: text("payer").notNull().default("joint"),
+  accountId: integer("account_id").references(() => cashAccounts.id, {
+    onDelete: "set null",
+  }),
   startMonth: date("start_month").notNull(),
   endMonth: date("end_month"),
   notes: text("notes").notNull().default(""),
@@ -53,6 +80,9 @@ export const billPayments = pgTable(
     yearMonth: text("year_month").notNull(),
     paidOn: date("paid_on").notNull(),
     amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
+    accountId: integer("account_id").references(() => cashAccounts.id, {
+      onDelete: "set null",
+    }),
   },
   (t) => ({
     billMonthUnique: uniqueIndex("bill_payments_bill_month_idx").on(
@@ -67,6 +97,9 @@ export const expenses = pgTable("expenses", {
   occurredOn: date("occurred_on").notNull(),
   amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
   categoryId: integer("category_id").references(() => categories.id, {
+    onDelete: "set null",
+  }),
+  accountId: integer("account_id").references(() => cashAccounts.id, {
     onDelete: "set null",
   }),
   payer: text("payer"),
@@ -107,3 +140,5 @@ export type BillPayment = typeof billPayments.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
 export type InvestmentAccount = typeof investmentAccounts.$inferSelect;
 export type InvestmentBalance = typeof investmentBalances.$inferSelect;
+export type CashAccount = typeof cashAccounts.$inferSelect;
+export type Transfer = typeof transfers.$inferSelect;

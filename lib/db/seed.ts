@@ -28,11 +28,40 @@ export async function runSeed(db: DB) {
     .returning();
   const catByName = new Map(categories.map((c) => [c.name, c.id]));
 
+  const cashAccounts = await db
+    .insert(schema.cashAccounts)
+    .values([
+      {
+        name: "Tyler",
+        owner: "tyler",
+        openingBalanceCents: 1_500_000,
+        openingAsOf: iso(subMonths(startOfThisMonth, 6)),
+        archived: false,
+      },
+      {
+        name: "Michelle",
+        owner: "wife",
+        openingBalanceCents: 1_200_000,
+        openingAsOf: iso(subMonths(startOfThisMonth, 6)),
+        archived: false,
+      },
+      {
+        name: "Joint",
+        owner: "joint",
+        openingBalanceCents: 3_000_000,
+        openingAsOf: iso(subMonths(startOfThisMonth, 6)),
+        archived: false,
+      },
+    ])
+    .returning();
+  const acctByOwner = new Map(cashAccounts.map((a) => [a.owner, a.id]));
+
   await db.insert(schema.incomeSources).values([
     {
       name: "Tyler — salary",
       amountCents: 850000,
       payer: "tyler",
+      accountId: acctByOwner.get("tyler") ?? null,
       startMonth: iso(subMonths(startOfThisMonth, 12)),
       endMonth: null,
       notes: "Bi-monthly direct deposit",
@@ -41,6 +70,7 @@ export async function runSeed(db: DB) {
       name: "Wife — salary",
       amountCents: 720000,
       payer: "wife",
+      accountId: acctByOwner.get("wife") ?? null,
       startMonth: iso(subMonths(startOfThisMonth, 9)),
       endMonth: null,
       notes: "",
@@ -49,6 +79,7 @@ export async function runSeed(db: DB) {
       name: "Side consulting",
       amountCents: 150000,
       payer: "joint",
+      accountId: acctByOwner.get("joint") ?? null,
       startMonth: iso(subMonths(startOfThisMonth, 4)),
       endMonth: null,
       notes: "Variable; rough monthly avg",
@@ -121,6 +152,7 @@ export async function runSeed(db: DB) {
     yearMonth: string;
     paidOn: string;
     amountCents: number;
+    accountId: number | null;
   }> = [];
   for (let m = 0; m < 3; m++) {
     const ymDate = subMonths(startOfThisMonth, m);
@@ -133,6 +165,7 @@ export async function runSeed(db: DB) {
         yearMonth: ym,
         paidOn: iso(addDays(ymDate, bill.dueDay - 1)),
         amountCents: bill.amountCents,
+        accountId: acctByOwner.get("joint") ?? null,
       });
     }
   }
@@ -181,11 +214,50 @@ export async function runSeed(db: DB) {
       occurredOn: iso(addDays(today, -e.daysBack)),
       amountCents: e.amount,
       categoryId: catByName.get(e.cat) ?? null,
+      accountId: acctByOwner.get(e.payer) ?? null,
       payer: e.payer,
       description: e.description,
       notes: "",
     })),
   );
+
+  await db.insert(schema.transfers).values([
+    {
+      fromAccountId: acctByOwner.get("tyler")!,
+      toAccountId: acctByOwner.get("joint")!,
+      amountCents: 150000,
+      occurredOn: iso(subMonths(startOfThisMonth, 1)),
+      notes: "Rent share",
+    },
+    {
+      fromAccountId: acctByOwner.get("wife")!,
+      toAccountId: acctByOwner.get("joint")!,
+      amountCents: 120000,
+      occurredOn: iso(subMonths(startOfThisMonth, 1)),
+      notes: "Expenses share",
+    },
+    {
+      fromAccountId: acctByOwner.get("tyler")!,
+      toAccountId: acctByOwner.get("joint")!,
+      amountCents: 150000,
+      occurredOn: iso(startOfThisMonth),
+      notes: "Rent share",
+    },
+    {
+      fromAccountId: acctByOwner.get("wife")!,
+      toAccountId: acctByOwner.get("joint")!,
+      amountCents: 120000,
+      occurredOn: iso(startOfThisMonth),
+      notes: "Expenses share",
+    },
+    {
+      fromAccountId: acctByOwner.get("joint")!,
+      toAccountId: acctByOwner.get("tyler")!,
+      amountCents: 25000,
+      occurredOn: iso(addDays(startOfThisMonth, 5)),
+      notes: "Reimbursement",
+    },
+  ]);
 
   const accounts = await db
     .insert(schema.investmentAccounts)

@@ -14,9 +14,10 @@ const items: Array<{
   { href: "/expenses", label: "Expenses", glyph: "II" },
   { href: "/bills", label: "Bills", glyph: "III" },
   { href: "/income", label: "Income", glyph: "IV" },
-  { href: "/investments", label: "Investments", glyph: "V" },
-  { href: "/categories", label: "Categories", glyph: "VI" },
-  { href: "/reports", label: "Reports", glyph: "VII" },
+  { href: "/accounts", label: "Accounts", glyph: "V" },
+  { href: "/investments", label: "Investments", glyph: "VI" },
+  { href: "/categories", label: "Categories", glyph: "VII" },
+  { href: "/reports", label: "Reports", glyph: "VIII" },
 ];
 
 export function SidebarNav() {

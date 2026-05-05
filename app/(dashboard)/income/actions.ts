@@ -11,6 +11,9 @@ const upsertSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(60),
   amount: z.coerce.number().positive("Amount must be > 0"),
   payer: z.enum(["tyler", "wife", "joint"]).default("joint"),
+  accountId: z
+    .union([z.coerce.number().int(), z.literal(""), z.null(), z.undefined()])
+    .transform((v) => (v === "" || v == null ? null : (v as number))),
   startMonth: z.string().regex(/^\d{4}-\d{2}$/, "Use YYYY-MM"),
   endMonth: z
     .union([z.string().regex(/^\d{4}-\d{2}$/), z.literal(""), z.null()])
@@ -26,7 +29,8 @@ export async function upsertIncome(input: unknown): Promise<UpsertIncomeResult> 
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  const { id, name, amount, payer, startMonth, endMonth, notes } = parsed.data;
+  const { id, name, amount, payer, accountId, startMonth, endMonth, notes } =
+    parsed.data;
   const amountCents = dollarsToCents(amount);
   const startDate = `${startMonth}-01`;
   const endDate = endMonth ? `${endMonth}-01` : null;
@@ -37,6 +41,7 @@ export async function upsertIncome(input: unknown): Promise<UpsertIncomeResult> 
         name,
         amountCents,
         payer,
+        accountId,
         startMonth: startDate,
         endMonth: endDate,
         notes,
@@ -47,6 +52,7 @@ export async function upsertIncome(input: unknown): Promise<UpsertIncomeResult> 
       name,
       amountCents,
       payer,
+      accountId,
       startMonth: startDate,
       endMonth: endDate,
       notes,
@@ -55,6 +61,7 @@ export async function upsertIncome(input: unknown): Promise<UpsertIncomeResult> 
   revalidatePath("/income");
   revalidatePath("/");
   revalidatePath("/reports");
+  revalidatePath("/accounts");
   return { ok: true };
 }
 

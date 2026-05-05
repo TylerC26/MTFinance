@@ -2,6 +2,7 @@ import { PlusIcon, PencilIcon, Trash2Icon, ZapIcon } from "lucide-react";
 import {
   billsWithPaymentStatus,
   listBills,
+  listCashAccounts,
   listCategories,
 } from "@/lib/queries";
 import { centsToDollars, formatCents } from "@/lib/money";
@@ -35,11 +36,16 @@ export default async function BillsPage({
   const monthRaw = sp.month;
   const month =
     monthRaw && isValidYearMonth(monthRaw) ? monthRaw : currentYearMonth();
-  const [allBills, withStatus, categories] = await Promise.all([
+  const [allBills, withStatus, categories, cashAccounts] = await Promise.all([
     listBills(),
     billsWithPaymentStatus(month),
     listCategories(),
+    listCashAccounts(),
   ]);
+  const defaultAccountId =
+    cashAccounts.find((a) => a.owner === "joint")?.id ??
+    cashAccounts[0]?.id ??
+    null;
   const activeCategories = categories.filter((c) => !c.archived);
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
   const total = withStatus.reduce((sum, { bill }) => sum + bill.amountCents, 0);
@@ -122,6 +128,8 @@ export default async function BillsPage({
                   yearMonth={month}
                   amountCents={bill.amountCents}
                   paid={Boolean(payment)}
+                  accountId={payment?.accountId ?? null}
+                  defaultAccountId={defaultAccountId}
                   className="shrink-0"
                 />
                 <BillFormDialog
@@ -240,6 +248,8 @@ export default async function BillsPage({
                         yearMonth={month}
                         amountCents={bill.amountCents}
                         paid={Boolean(payment)}
+                        accountId={payment?.accountId ?? null}
+                        defaultAccountId={defaultAccountId}
                       />
                     </TableCell>
                     <TableCell>

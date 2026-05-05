@@ -107,8 +107,12 @@ export function AccountFormDialog({
                 value={form.watch("kind")}
                 onValueChange={(v) => form.setValue("kind", v ?? "")}
               >
-                <SelectTrigger id="kind">
-                  <SelectValue />
+                <SelectTrigger id="kind" className="w-full">
+                  <SelectValue>
+                    {(value: string | null) =>
+                      KINDS.find(([v]) => v === value)?.[1] ?? ""
+                    }
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {KINDS.map(([value, label]) => (
@@ -124,8 +128,15 @@ export function AccountFormDialog({
                 value={form.watch("owner")}
                 onValueChange={(v) => form.setValue("owner", v ?? "")}
               >
-                <SelectTrigger id="owner">
-                  <SelectValue />
+                <SelectTrigger id="owner" className="w-full">
+                  <SelectValue>
+                    {(value: string | null) => {
+                      if (value === "tyler") return "Tyler";
+                      if (value === "wife") return "Michelle";
+                      if (value === "joint") return "Joint";
+                      return "";
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="tyler">Tyler</SelectItem>

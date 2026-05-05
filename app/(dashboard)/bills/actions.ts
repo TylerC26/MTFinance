@@ -55,6 +55,7 @@ export async function setBillPaid(
   yearMonth: string,
   paid: boolean,
   amountCents: number,
+  accountId: number | null = null,
 ) {
   if (paid) {
     await db
@@ -64,10 +65,11 @@ export async function setBillPaid(
         yearMonth,
         paidOn: todayIso(),
         amountCents,
+        accountId,
       })
       .onConflictDoUpdate({
         target: [schema.billPayments.billId, schema.billPayments.yearMonth],
-        set: { paidOn: todayIso(), amountCents },
+        set: { paidOn: todayIso(), amountCents, accountId },
       });
   } else {
     await db
@@ -81,4 +83,5 @@ export async function setBillPaid(
   }
   revalidatePath("/bills");
   revalidatePath("/");
+  revalidatePath("/accounts");
 }
