@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { logBalance } from "@/app/(dashboard)/investments/actions";
 import { Input } from "@/components/ui/input";
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import {
@@ -108,22 +109,21 @@ export function BalanceFormDialog({
               </SelectContent>
             </Select>
           </FormField>
-          <div className="grid grid-cols-2 gap-3">
-            <FormField id="asOf" label="As of">
-              <Input id="asOf" type="date" {...form.register("asOf", { required: true })} />
-            </FormField>
-            <FormField id="balance" label="Balance">
-              <Input
-                id="balance"
-                type="number"
-                step="0.01"
-                min="0"
-                inputMode="decimal"
-                autoFocus
-                {...form.register("balance", { valueAsNumber: true, required: true })}
-              />
-            </FormField>
-          </div>
+          <FormField id="balance" label="Balance">
+            <AmountInput
+              id="balance"
+              autoFocus
+              {...form.register("balance", { valueAsNumber: true, required: true })}
+            />
+          </FormField>
+          <FormField id="asOf" label="As of">
+            <Input
+              id="asOf"
+              type="date"
+              className="w-fit"
+              {...form.register("asOf", { required: true })}
+            />
+          </FormField>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline">Cancel</Button>} />
             <Button type="submit" disabled={form.formState.isSubmitting}>

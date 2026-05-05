@@ -27,9 +27,9 @@ export function PageHeader({
             </p>
           ) : null}
         </div>
-        <div className="flex items-center gap-3 sm:gap-4 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center justify-between gap-3 sm:justify-start sm:gap-4 flex-wrap sm:flex-nowrap">
           {meta ? (
-            <div className="font-mono text-[11px] text-muted-foreground tracking-wide order-2 sm:order-1">
+            <div className="font-mono text-[11px] text-muted-foreground tracking-wide order-2 ml-auto sm:order-1 sm:ml-0">
               {meta}
             </div>
           ) : null}

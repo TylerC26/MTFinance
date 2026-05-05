@@ -72,7 +72,80 @@ export default async function ExpensesPage({
         }
       />
 
-      <div className="rounded-lg border border-border overflow-x-auto">
+      {expenses.length === 0 ? (
+        <div className="rounded-lg border border-border py-12 text-center font-mono text-sm text-muted-foreground sm:hidden">
+          — no expenses logged this month —
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-3 sm:hidden">
+          {expenses.map(({ expense, category }) => (
+            <li
+              key={expense.id}
+              className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <div className="truncate font-medium">
+                    {expense.description || (
+                      <span className="italic text-muted-foreground">
+                        unmarked
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                    <span className="tabular-nums normal-case tracking-normal">
+                      {format(new Date(expense.occurredOn), "MMM d").toLowerCase()}
+                    </span>
+                    {category ? (
+                      <span className="inline-flex items-center gap-2 normal-case tracking-normal">
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        {category.name}
+                      </span>
+                    ) : null}
+                    <span>
+                      {expense.payer === "wife"
+                        ? "michelle"
+                        : (expense.payer ?? "—")}
+                    </span>
+                  </div>
+                </div>
+                <div className="font-mono text-lg tabular-nums shrink-0">
+                  {formatCents(expense.amountCents)}
+                </div>
+              </div>
+              <div className="flex justify-end gap-1">
+                <ExpenseFormDialog
+                  categories={activeCategories.map((c) => ({
+                    id: c.id,
+                    name: c.name,
+                  }))}
+                  defaults={{
+                    id: expense.id,
+                    occurredOn: expense.occurredOn,
+                    amount: centsToDollars(expense.amountCents),
+                    categoryId: expense.categoryId,
+                    payer: expense.payer,
+                    description: expense.description,
+                  }}
+                  trigger={
+                    <Button variant="ghost" size="icon-sm" aria-label="Edit">
+                      <PencilIcon />
+                    </Button>
+                  }
+                />
+                <DeleteExpenseButton id={expense.id}>
+                  <Trash2Icon />
+                </DeleteExpenseButton>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="hidden rounded-lg border border-border overflow-x-auto sm:block">
         <Table>
           <TableHeader>
             <TableRow className="border-border bg-muted/40">

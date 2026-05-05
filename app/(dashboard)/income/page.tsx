@@ -65,7 +65,73 @@ export default async function IncomePage({
         }
       />
 
-      <div className="rounded-lg border border-border overflow-x-auto">
+      {all.length === 0 ? (
+        <div className="rounded-lg border border-border py-12 text-center font-mono text-sm text-muted-foreground sm:hidden">
+          — no income sources yet —
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-3 sm:hidden">
+          {all.map((i) => {
+            const isActive = activeIds.has(i.id);
+            return (
+              <li
+                key={i.id}
+                className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <div className="truncate font-medium">{i.name}</div>
+                    {i.notes ? (
+                      <div className="truncate text-xs text-muted-foreground">
+                        {i.notes}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="font-mono text-lg tabular-nums shrink-0">
+                    {formatCents(i.amountCents)}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <span>{i.payer === "wife" ? "michelle" : i.payer}</span>
+                  <span className="tabular-nums normal-case tracking-normal">
+                    {format(new Date(i.startMonth), "MMM yyyy").toLowerCase()}
+                    <span className="px-1.5">→</span>
+                    {i.endMonth
+                      ? format(new Date(i.endMonth), "MMM yyyy").toLowerCase()
+                      : "ongoing"}
+                  </span>
+                  <span className={isActive ? "text-positive" : undefined}>
+                    {isActive ? "active" : "dormant"}
+                  </span>
+                </div>
+                <div className="flex justify-end gap-1">
+                  <IncomeFormDialog
+                    defaults={{
+                      id: i.id,
+                      name: i.name,
+                      amount: centsToDollars(i.amountCents),
+                      payer: i.payer as "tyler" | "wife" | "joint",
+                      startMonth: i.startMonth.slice(0, 7),
+                      endMonth: i.endMonth ? i.endMonth.slice(0, 7) : null,
+                      notes: i.notes,
+                    }}
+                    trigger={
+                      <Button variant="ghost" size="icon-sm" aria-label="Edit">
+                        <PencilIcon />
+                      </Button>
+                    }
+                  />
+                  <DeleteIncomeButton id={i.id}>
+                    <Trash2Icon />
+                  </DeleteIncomeButton>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <div className="hidden rounded-lg border border-border overflow-x-auto sm:block">
         <Table>
           <TableHeader>
             <TableRow className="border-border bg-muted/40">

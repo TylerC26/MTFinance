@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { upsertBill } from "@/app/(dashboard)/bills/actions";
 import { Input } from "@/components/ui/input";
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import {
@@ -114,17 +115,13 @@ export function BillFormDialog({
               {...form.register("name", { required: "Required" })}
             />
           </FormField>
-          <div className="grid grid-cols-3 gap-3">
-            <FormField id="amount" label="Amount">
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                inputMode="decimal"
-                {...form.register("amount", { valueAsNumber: true, required: true })}
-              />
-            </FormField>
+          <FormField id="amount" label="Amount">
+            <AmountInput
+              id="amount"
+              {...form.register("amount", { valueAsNumber: true, required: true })}
+            />
+          </FormField>
+          <div className="grid grid-cols-2 gap-3">
             <FormField id="dueDay" label="Due day" hint="1-31">
               <Input
                 id="dueDay"

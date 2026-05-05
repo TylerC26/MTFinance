@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  FolderIcon,
+  CalendarDaysIcon,
   HomeIcon,
   MenuIcon,
   PlusIcon,
@@ -44,9 +44,9 @@ export function MobileDockClient({ categories }: { categories: Category[] }) {
           exact
         />
         <DockLink
-          href="/bills"
+          href="/expenses"
           icon={ReceiptIcon}
-          label="Bills"
+          label="Expenses"
           pathname={pathname}
         />
         <li className="relative flex h-full items-start justify-center">
@@ -64,9 +64,9 @@ export function MobileDockClient({ categories }: { categories: Category[] }) {
           />
         </li>
         <DockLink
-          href="/categories"
-          icon={FolderIcon}
-          label="Categories"
+          href="/bills"
+          icon={CalendarDaysIcon}
+          label="Bills"
           pathname={pathname}
         />
         <li>

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { upsertCategory } from "@/app/(dashboard)/categories/actions";
 import { Input } from "@/components/ui/input";
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import {
@@ -87,29 +88,23 @@ export function CategoryFormDialog({
               {...form.register("name", { required: "Name is required" })}
             />
           </FormField>
-          <div className="grid grid-cols-[120px_1fr] gap-3">
-            <FormField id="color" label="Color">
-              <Input id="color" type="color" {...form.register("color")} />
-            </FormField>
-            <FormField
+          <FormField
+            id="monthlyBudget"
+            label="Monthly budget"
+            hint="In dollars"
+            error={form.formState.errors.monthlyBudget?.message}
+          >
+            <AmountInput
               id="monthlyBudget"
-              label="Monthly budget"
-              hint="In dollars"
-              error={form.formState.errors.monthlyBudget?.message}
-            >
-              <Input
-                id="monthlyBudget"
-                type="number"
-                step="0.01"
-                min="0"
-                inputMode="decimal"
-                {...form.register("monthlyBudget", {
-                  valueAsNumber: true,
-                  min: { value: 0, message: "Must be ≥ 0" },
-                })}
-              />
-            </FormField>
-          </div>
+              {...form.register("monthlyBudget", {
+                valueAsNumber: true,
+                min: { value: 0, message: "Must be ≥ 0" },
+              })}
+            />
+          </FormField>
+          <FormField id="color" label="Color">
+            <Input id="color" type="color" className="w-20" {...form.register("color")} />
+          </FormField>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline">Cancel</Button>} />
             <Button type="submit" disabled={form.formState.isSubmitting}>

@@ -13,7 +13,7 @@ type FieldProps = {
 
 export function FormField({ id, label, error, hint, className, children }: FieldProps) {
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
       {label ? (
         <Label htmlFor={id} className="text-sm font-medium">
           {label}

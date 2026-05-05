@@ -130,7 +130,72 @@ export default async function InvestmentsPage() {
           <p className="eyebrow">Accounts</p>
           <span className="h-px flex-1 bg-border" />
         </div>
-        <div className="rounded-lg border border-border overflow-x-auto">
+        {accounts.length === 0 ? (
+          <div className="rounded-lg border border-border py-12 text-center font-mono text-sm text-muted-foreground sm:hidden">
+            — no accounts yet —
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-3 sm:hidden">
+            {accounts.map((a) => {
+              const latest = latestByAccount.get(a.id);
+              return (
+                <li
+                  key={a.id}
+                  className={`flex flex-col gap-4 rounded-lg border border-border bg-card p-4 ${a.archived ? "opacity-50" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 flex-col gap-2">
+                      <div className="truncate font-medium">
+                        {a.name}
+                        {a.archived ? (
+                          <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                            retired
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                        <span>{KIND_LABELS[a.kind] ?? a.kind}</span>
+                        <span>{a.owner}</span>
+                        {latest?.as_of ? (
+                          <span className="tabular-nums normal-case tracking-normal">
+                            {format(
+                              new Date(latest.as_of),
+                              "MMM d, yyyy",
+                            ).toLowerCase()}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="font-mono text-lg tabular-nums shrink-0">
+                      {latest?.balance_cents != null
+                        ? formatCents(latest.balance_cents)
+                        : "—"}
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-1">
+                    <AccountFormDialog
+                      defaults={{
+                        id: a.id,
+                        name: a.name,
+                        kind: a.kind,
+                        owner: a.owner,
+                      }}
+                      trigger={
+                        <Button variant="ghost" size="icon-sm" aria-label="Edit">
+                          <PencilIcon />
+                        </Button>
+                      }
+                    />
+                    <ArchiveAccountButton id={a.id} archived={a.archived}>
+                      {a.archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
+                    </ArchiveAccountButton>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <div className="hidden rounded-lg border border-border overflow-x-auto sm:block">
           <Table>
             <TableHeader>
               <TableRow className="border-border bg-muted/40">
@@ -244,7 +309,32 @@ export default async function InvestmentsPage() {
           <p className="eyebrow">Recent entries</p>
           <span className="h-px flex-1 bg-border" />
         </div>
-        <div className="rounded-lg border border-border overflow-x-auto">
+        {balances.length === 0 ? (
+          <div className="rounded-lg border border-border py-12 text-center font-mono text-sm text-muted-foreground sm:hidden">
+            — no balances logged —
+          </div>
+        ) : (
+          <ul className="flex flex-col rounded-lg border border-border bg-card divide-y divide-border overflow-hidden sm:hidden">
+            {balances.slice(0, 25).map(({ balance, account }) => (
+              <li
+                key={balance.id}
+                className="flex items-center gap-4 px-4 py-3"
+              >
+                <span className="font-mono tabular-nums text-xs text-muted-foreground shrink-0 w-16">
+                  {format(new Date(balance.asOf), "MMM d").toLowerCase()}
+                </span>
+                <span className="flex-1 min-w-0 truncate text-sm">
+                  {account.name}
+                </span>
+                <span className="font-mono tabular-nums text-xs shrink-0">
+                  {formatCents(balance.balanceCents)}
+                </span>
+                <DeleteBalanceButton id={balance.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="hidden rounded-lg border border-border overflow-x-auto sm:block">
           <Table>
             <TableHeader>
               <TableRow className="border-border bg-muted/40">

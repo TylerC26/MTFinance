@@ -5,15 +5,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { upsertIncome } from "@/app/(dashboard)/income/actions";
 import { Input } from "@/components/ui/input";
+import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogClose,
@@ -24,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { currentYearMonth } from "@/lib/dates";
+import { PayerSelector } from "./payer-selector";
 
 type Defaults = {
   id?: number;
@@ -109,48 +104,39 @@ export function IncomeFormDialog({
               {...form.register("name", { required: "Required" })}
             />
           </FormField>
-          <div className="grid grid-cols-2 gap-3">
-            <FormField id="amount" label="Monthly amount" hint="Net, in dollars">
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                inputMode="decimal"
-                {...form.register("amount", {
-                  valueAsNumber: true,
-                  required: true,
-                })}
-              />
-            </FormField>
-            <FormField id="payer" label="Earner">
-              <Select
-                value={form.watch("payer")}
-                onValueChange={(v) =>
-                  form.setValue("payer", (v ?? "joint") as Values["payer"])
-                }
-              >
-                <SelectTrigger id="payer">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tyler">Tyler</SelectItem>
-                  <SelectItem value="wife">Michelle</SelectItem>
-                  <SelectItem value="joint">Joint</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormField>
-          </div>
+          <FormField id="amount" label="Monthly amount" hint="Net, in dollars">
+            <AmountInput
+              id="amount"
+              {...form.register("amount", {
+                valueAsNumber: true,
+                required: true,
+              })}
+            />
+          </FormField>
+          <FormField id="payer" label="Earner">
+            <PayerSelector
+              value={form.watch("payer")}
+              onChange={(v) =>
+                form.setValue("payer", (v || "joint") as Values["payer"])
+              }
+            />
+          </FormField>
           <div className="grid grid-cols-2 gap-3">
             <FormField id="startMonth" label="Starts" hint="YYYY-MM">
               <Input
                 id="startMonth"
                 type="month"
+                className="w-3/5"
                 {...form.register("startMonth", { required: true })}
               />
             </FormField>
             <FormField id="endMonth" label="Ends" hint="Optional">
-              <Input id="endMonth" type="month" {...form.register("endMonth")} />
+              <Input
+                id="endMonth"
+                type="month"
+                className="w-3/5"
+                {...form.register("endMonth")}
+              />
             </FormField>
           </div>
           <FormField id="notes" label="Notes">
