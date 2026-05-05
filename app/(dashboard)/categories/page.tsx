@@ -102,7 +102,9 @@ export default async function CategoriesPage() {
                     {c.monthlyBudgetCents > 0 ? (
                       formatCents(c.monthlyBudgetCents)
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        tracking only
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>

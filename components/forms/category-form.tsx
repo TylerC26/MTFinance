@@ -4,6 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { upsertCategory } from "@/app/(dashboard)/categories/actions";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ type Values = {
   name: string;
   color: string;
   monthlyBudget: number;
+  hasBudget: "yes" | "no";
 };
 
 export function CategoryFormDialog({
@@ -40,11 +42,14 @@ export function CategoryFormDialog({
 }) {
   const [open, setOpen] = React.useState(false);
   const isEdit = Boolean(defaults?.id);
+  const initialHasBudget: "yes" | "no" =
+    (defaults?.monthlyBudget ?? 0) > 0 ? "yes" : "no";
   const form = useForm<Values>({
     defaultValues: {
       name: defaults?.name ?? "",
       color: defaults?.color ?? "#64748b",
       monthlyBudget: defaults?.monthlyBudget ?? 0,
+      hasBudget: initialHasBudget,
     },
   });
 
@@ -54,12 +59,20 @@ export function CategoryFormDialog({
         name: defaults?.name ?? "",
         color: defaults?.color ?? "#64748b",
         monthlyBudget: defaults?.monthlyBudget ?? 0,
+        hasBudget: (defaults?.monthlyBudget ?? 0) > 0 ? "yes" : "no",
       });
     }
   }, [open, defaults, form]);
 
+  const hasBudget = form.watch("hasBudget");
+
   const onSubmit = form.handleSubmit(async (values) => {
-    const res = await upsertCategory({ ...values, id: defaults?.id });
+    const res = await upsertCategory({
+      name: values.name,
+      color: values.color,
+      monthlyBudget: values.hasBudget === "yes" ? values.monthlyBudget : 0,
+      id: defaults?.id,
+    });
     if (!res.ok) {
       toast.error(res.error);
       return;
@@ -88,20 +101,54 @@ export function CategoryFormDialog({
               {...form.register("name", { required: "Name is required" })}
             />
           </FormField>
-          <FormField
-            id="monthlyBudget"
-            label="Monthly budget"
-            hint="In dollars"
-            error={form.formState.errors.monthlyBudget?.message}
-          >
-            <AmountInput
-              id="monthlyBudget"
-              {...form.register("monthlyBudget", {
-                valueAsNumber: true,
-                min: { value: 0, message: "Must be ≥ 0" },
+          <FormField id="hasBudget" label="Tracking">
+            <div
+              role="radiogroup"
+              className="inline-flex w-full rounded-md border border-input bg-background p-0.5"
+            >
+              {(
+                [
+                  { value: "yes", label: "Monthly budget" },
+                  { value: "no", label: "Track expenses only" },
+                ] as const
+              ).map((o) => {
+                const active = hasBudget === o.value;
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => form.setValue("hasBudget", o.value)}
+                    className={cn(
+                      "flex-1 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                      active
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {o.label}
+                  </button>
+                );
               })}
-            />
+            </div>
           </FormField>
+          {hasBudget === "yes" ? (
+            <FormField
+              id="monthlyBudget"
+              label="Monthly budget"
+              hint="In dollars"
+              error={form.formState.errors.monthlyBudget?.message}
+            >
+              <AmountInput
+                id="monthlyBudget"
+                {...form.register("monthlyBudget", {
+                  valueAsNumber: true,
+                  min: { value: 0, message: "Must be ≥ 0" },
+                })}
+              />
+            </FormField>
+          ) : null}
           <FormField id="color" label="Color">
             <Input id="color" type="color" className="w-20" {...form.register("color")} />
           </FormField>

@@ -48,7 +48,7 @@ export function BudgetBars({ rows }: { rows: Row[] }) {
                     {formatCents(r.budgetCents)}
                   </span>
                 ) : (
-                  <span className="text-muted-foreground"> · no cap</span>
+                  <span className="text-muted-foreground"> · tracking only</span>
                 )}
               </span>
             </div>

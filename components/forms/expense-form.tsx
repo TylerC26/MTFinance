@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { upsertExpense } from "@/app/(dashboard)/expenses/actions";
+import { deleteExpense, upsertExpense } from "@/app/(dashboard)/expenses/actions";
 import { Input } from "@/components/ui/input";
 import { AmountInput } from "@/components/ui/amount-input";
 import { Button } from "@/components/ui/button";
@@ -190,11 +190,30 @@ function ManualExpenseForm({
           accounts={accounts}
         />
       </FormField>
-      <DialogFooter>
-        <DialogClose render={<Button type="button" variant="outline">Cancel</Button>} />
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {isEdit ? "Save" : "Log expense"}
-        </Button>
+      <DialogFooter className={isEdit ? "sm:justify-between" : undefined}>
+        {isEdit ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            disabled={form.formState.isSubmitting}
+            onClick={async () => {
+              if (!defaults?.id) return;
+              if (!confirm("Delete this expense?")) return;
+              await deleteExpense(defaults.id);
+              toast.success("Expense deleted");
+              onSuccess();
+            }}
+          >
+            Delete
+          </Button>
+        ) : null}
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-2">
+          <DialogClose render={<Button type="button" variant="outline">Cancel</Button>} />
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {isEdit ? "Save" : "Log expense"}
+          </Button>
+        </div>
       </DialogFooter>
     </form>
   );

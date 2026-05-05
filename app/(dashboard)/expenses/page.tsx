@@ -89,73 +89,65 @@ export default async function ExpensesPage({
           — no expenses logged this month —
         </div>
       ) : (
-        <ul className="flex flex-col gap-3 sm:hidden">
+        <ul className="flex flex-col gap-2 sm:hidden">
           {expenses.map(({ expense, category }) => (
-            <li
-              key={expense.id}
-              className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex min-w-0 flex-col gap-2">
-                  <div className="truncate font-medium">
-                    {expense.description || (
-                      <span className="italic text-muted-foreground">
-                        unmarked
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                    <span className="tabular-nums normal-case tracking-normal">
-                      {format(new Date(expense.occurredOn), "MMM d").toLowerCase()}
-                    </span>
-                    {category ? (
-                      <span className="inline-flex items-center gap-2 normal-case tracking-normal">
-                        <span
-                          className="size-2 rounded-full"
-                          style={{ backgroundColor: category.color }}
-                        />
-                        {category.name}
-                      </span>
-                    ) : null}
-                    <span>
-                      {expense.accountId != null
-                        ? (accountNameById.get(expense.accountId) ?? "—")
-                        : expense.payer === "wife"
-                          ? "michelle"
-                          : (expense.payer ?? "—")}
-                    </span>
-                  </div>
-                </div>
-                <div className="font-mono text-lg tabular-nums shrink-0">
-                  {formatCents(expense.amountCents)}
-                </div>
-              </div>
-              <div className="flex justify-end gap-1">
-                <ExpenseFormDialog
-                  categories={activeCategories.map((c) => ({
-                    id: c.id,
-                    name: c.name,
-                  }))}
-                  accounts={accountOptions}
-                  defaults={{
-                    id: expense.id,
-                    occurredOn: expense.occurredOn,
-                    amount: centsToDollars(expense.amountCents),
-                    categoryId: expense.categoryId,
-                    accountId: expense.accountId,
-                    payer: expense.payer,
-                    description: expense.description,
-                  }}
-                  trigger={
-                    <Button variant="ghost" size="icon-sm" aria-label="Edit">
-                      <PencilIcon />
-                    </Button>
-                  }
-                />
-                <DeleteExpenseButton id={expense.id}>
-                  <Trash2Icon />
-                </DeleteExpenseButton>
-              </div>
+            <li key={expense.id}>
+              <ExpenseFormDialog
+                categories={activeCategories.map((c) => ({
+                  id: c.id,
+                  name: c.name,
+                }))}
+                accounts={accountOptions}
+                defaults={{
+                  id: expense.id,
+                  occurredOn: expense.occurredOn,
+                  amount: centsToDollars(expense.amountCents),
+                  categoryId: expense.categoryId,
+                  accountId: expense.accountId,
+                  payer: expense.payer,
+                  description: expense.description,
+                }}
+                trigger={
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between gap-4 rounded-lg border border-border bg-card px-3 py-2.5 text-left transition-colors hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <div className="truncate text-sm font-medium">
+                        {expense.description || (
+                          <span className="italic text-muted-foreground">
+                            unmarked
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span className="tabular-nums normal-case tracking-normal">
+                          {format(new Date(expense.occurredOn), "MMM d").toLowerCase()}
+                        </span>
+                        {category ? (
+                          <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
+                            <span
+                              className="size-1.5 rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            {category.name}
+                          </span>
+                        ) : null}
+                        <span>
+                          {expense.accountId != null
+                            ? (accountNameById.get(expense.accountId) ?? "—")
+                            : expense.payer === "wife"
+                              ? "michelle"
+                              : (expense.payer ?? "—")}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="font-mono text-base tabular-nums shrink-0">
+                      {formatCents(expense.amountCents)}
+                    </div>
+                  </button>
+                }
+              />
             </li>
           ))}
         </ul>
