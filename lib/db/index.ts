@@ -1,9 +1,43 @@
+import { isNull, sql } from "drizzle-orm";
 import * as schema from "./schema";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 const MOCK = process.env.MOCK_MODE === "1";
 
 type DB = NodePgDatabase<typeof schema>;
+
+async function ensureCashAccounts(db: DB) {
+  const [first] = await db.select().from(schema.cashAccounts).limit(1);
+  if (first) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const inserted = await db
+    .insert(schema.cashAccounts)
+    .values([
+      { name: "Tyler", owner: "tyler", openingBalanceCents: 0, openingAsOf: today },
+      { name: "Michelle", owner: "wife", openingBalanceCents: 0, openingAsOf: today },
+      { name: "Joint", owner: "joint", openingBalanceCents: 0, openingAsOf: today },
+    ])
+    .returning();
+  const byOwner = new Map(inserted.map((a) => [a.owner, a.id]));
+
+  for (const [owner, id] of byOwner) {
+    await db
+      .update(schema.expenses)
+      .set({ accountId: id })
+      .where(sql`${schema.expenses.accountId} is null and ${schema.expenses.payer} = ${owner}`);
+    await db
+      .update(schema.incomeSources)
+      .set({ accountId: id })
+      .where(sql`${schema.incomeSources.accountId} is null and ${schema.incomeSources.payer} = ${owner}`);
+  }
+  const jointId = byOwner.get("joint");
+  if (jointId != null) {
+    await db
+      .update(schema.billPayments)
+      .set({ accountId: jointId })
+      .where(isNull(schema.billPayments.accountId));
+  }
+}
 
 async function initDb(): Promise<DB> {
   if (MOCK) {
@@ -19,6 +53,7 @@ async function initDb(): Promise<DB> {
       const seed = await import("./seed");
       await seed.runSeed(db as unknown as DB);
     }
+    await ensureCashAccounts(db as unknown as DB);
     return db as unknown as DB;
   }
   const [{ Pool }, { drizzle }] = await Promise.all([
@@ -43,7 +78,9 @@ async function initDb(): Promise<DB> {
     connectionString: cleanedUrl,
     ssl: sslDisabled ? false : { rejectUnauthorized: false },
   });
-  return drizzle(pool, { schema, casing: "snake_case" });
+  const db = drizzle(pool, { schema, casing: "snake_case" });
+  await ensureCashAccounts(db);
+  return db;
 }
 
 const SCHEMA_SQL = `
