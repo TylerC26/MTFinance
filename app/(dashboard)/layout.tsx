@@ -7,6 +7,7 @@ import {
   MobileSidebarTrigger,
 } from "@/components/sidebar-shell";
 import { MobileDock } from "@/components/mobile-dock";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 
 export default function DashboardLayout({
   children,
@@ -37,7 +38,7 @@ export default function DashboardLayout({
           </div>
         </header>
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28 lg:pb-8">
-          {children}
+          <PullToRefresh>{children}</PullToRefresh>
         </main>
       </div>
       <MobileDock />

@@ -209,9 +209,3 @@
   transform: translateY(-0.25em);
   min-width: 1rem;
 }
-
-/* Toasts shown in the visual middle of the viewport */
-[data-sonner-toaster][data-y-position="top"][data-x-position="center"] {
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;
-}
