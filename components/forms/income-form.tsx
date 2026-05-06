@@ -64,7 +64,7 @@ export function IncomeFormDialog({
   const form = useForm<Values>({
     defaultValues: {
       name: defaults?.name ?? "",
-      amount: defaults?.amount ?? 0,
+      amount: defaults?.amount ?? (undefined as unknown as number),
       payer: defaults?.payer ?? "joint",
       accountId: initialAccountId(defaults),
       startMonth: defaults?.startMonth ?? currentYearMonth(),
@@ -77,7 +77,7 @@ export function IncomeFormDialog({
     if (open) {
       form.reset({
         name: defaults?.name ?? "",
-        amount: defaults?.amount ?? 0,
+        amount: defaults?.amount ?? (undefined as unknown as number),
         payer: defaults?.payer ?? "joint",
         accountId: initialAccountId(defaults),
         startMonth: defaults?.startMonth ?? currentYearMonth(),

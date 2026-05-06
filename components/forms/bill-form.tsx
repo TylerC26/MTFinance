@@ -62,7 +62,7 @@ export function BillFormDialog({
   const form = useForm<Values>({
     defaultValues: {
       name: defaults?.name ?? "",
-      amount: defaults?.amount ?? 0,
+      amount: defaults?.amount ?? (undefined as unknown as number),
       dueDay: defaults?.dueDay ?? 1,
       categoryId: defaults?.categoryId != null ? String(defaults.categoryId) : "",
       autopay: defaults?.autopay ?? false,
@@ -75,7 +75,7 @@ export function BillFormDialog({
     if (open) {
       form.reset({
         name: defaults?.name ?? "",
-        amount: defaults?.amount ?? 0,
+        amount: defaults?.amount ?? (undefined as unknown as number),
         dueDay: defaults?.dueDay ?? 1,
         categoryId: defaults?.categoryId != null ? String(defaults.categoryId) : "",
         autopay: defaults?.autopay ?? false,

@@ -220,7 +220,7 @@ export function ExpenseApplePayTab({
                     inputMode="decimal"
                     value={row.amount}
                     onChange={(e) => updateRow(i, { amount: e.target.value })}
-                    placeholder="0.00"
+                    placeholder="Amount"
                     aria-label="Amount"
                     className="h-9 border-0 bg-transparent pl-5 font-mono text-2xl font-semibold tabular-nums shadow-none focus-visible:ring-0"
                   />

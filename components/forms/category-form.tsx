@@ -48,7 +48,7 @@ export function CategoryFormDialog({
     defaultValues: {
       name: defaults?.name ?? "",
       color: defaults?.color ?? "#64748b",
-      monthlyBudget: defaults?.monthlyBudget ?? 0,
+      monthlyBudget: defaults?.monthlyBudget ?? (undefined as unknown as number),
       hasBudget: initialHasBudget,
     },
   });
@@ -58,7 +58,7 @@ export function CategoryFormDialog({
       form.reset({
         name: defaults?.name ?? "",
         color: defaults?.color ?? "#64748b",
-        monthlyBudget: defaults?.monthlyBudget ?? 0,
+        monthlyBudget: defaults?.monthlyBudget ?? (undefined as unknown as number),
         hasBudget: (defaults?.monthlyBudget ?? 0) > 0 ? "yes" : "no",
       });
     }

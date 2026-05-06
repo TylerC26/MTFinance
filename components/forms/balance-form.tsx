@@ -52,7 +52,7 @@ export function BalanceFormDialog({
           ? String(accounts[0].id)
           : "",
       asOf: todayIso(),
-      balance: 0,
+      balance: undefined as unknown as number,
     },
   });
 
@@ -65,7 +65,7 @@ export function BalanceFormDialog({
             ? String(accounts[0].id)
             : "",
         asOf: todayIso(),
-        balance: 0,
+        balance: undefined as unknown as number,
       });
     }
   }, [open, accounts, defaultAccountId, form]);

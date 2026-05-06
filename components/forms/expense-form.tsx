@@ -82,7 +82,7 @@ const titles: Record<Exclude<Step, "select">, string> = {
 function defaultValues(d?: ExpenseDefaults): Values {
   return {
     occurredOn: d?.occurredOn ?? todayIso(),
-    amount: d?.amount ?? 0,
+    amount: d?.amount ?? (undefined as unknown as number),
     categoryId: d?.categoryId != null ? String(d.categoryId) : "",
     accountId: d?.accountId != null ? String(d.accountId) : "",
     payer: d?.payer ?? "",

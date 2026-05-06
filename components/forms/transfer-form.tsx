@@ -61,7 +61,7 @@ export function TransferFormDialog({
         defaults?.fromAccountId != null ? String(defaults.fromAccountId) : "",
       toAccountId:
         defaults?.toAccountId != null ? String(defaults.toAccountId) : "",
-      amount: defaults?.amount ?? 0,
+      amount: defaults?.amount ?? (undefined as unknown as number),
       occurredOn: defaults?.occurredOn ?? todayIso(),
       notes: defaults?.notes ?? "",
     }),
