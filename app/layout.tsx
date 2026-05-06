@@ -37,8 +37,8 @@ export default function RootLayout({
         <Toaster
           richColors
           position="top-center"
-          offset="45vh"
-          mobileOffset="42vh"
+          offset={{ top: "45vh" }}
+          mobileOffset={{ top: "42vh" }}
           toastOptions={{
             classNames: { toast: "font-sans" },
           }}
