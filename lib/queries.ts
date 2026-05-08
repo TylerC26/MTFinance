@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { monthBounds, type YearMonth } from "@/lib/dates";
+import { monthBounds, todayIso, type YearMonth } from "@/lib/dates";
 
 export async function listCategories() {
   return db
@@ -105,6 +105,21 @@ export async function spendByCategoryForMonth(ym: YearMonth) {
       schema.categories.monthlyBudgetCents,
     );
   return rows;
+}
+
+export async function spendForToday(): Promise<{
+  totalCents: number;
+  count: number;
+}> {
+  const today = todayIso();
+  const [row] = await db
+    .select({
+      total: sql<number>`coalesce(sum(${schema.expenses.amountCents}), 0)::int`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(schema.expenses)
+    .where(eq(schema.expenses.occurredOn, today));
+  return { totalCents: row?.total ?? 0, count: row?.count ?? 0 };
 }
 
 export async function totalSpendForMonth(ym: YearMonth): Promise<number> {

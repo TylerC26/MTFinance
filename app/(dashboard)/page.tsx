@@ -7,6 +7,7 @@ import {
   listCategories,
   listExpensesForMonth,
   spendByCategoryForMonth,
+  spendForToday,
   totalSpendForMonth,
 } from "@/lib/queries";
 import { getAccountBalances } from "@/lib/db/queries/account-balance";
@@ -51,6 +52,7 @@ export default async function Home({
     expenses,
     accountBalances,
     cashflow,
+    today,
   ] = await Promise.all([
     activeIncomeForMonth(month),
     billsWithPaymentStatus(month),
@@ -63,6 +65,7 @@ export default async function Home({
     listExpensesForMonth(month),
     getAccountBalances(),
     monthSeries(12),
+    spendForToday(),
   ]);
   const accountOptions = cashAccounts.map((a) => ({
     id: a.id,
@@ -179,9 +182,9 @@ export default async function Home({
 
       <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border rounded-xl overflow-hidden border border-border">
         <FigureBlock
-          eyebrow="Earnings"
-          value={incomeTotal}
-          caption={`${income.length} active source${income.length === 1 ? "" : "s"}`}
+          eyebrow="Today"
+          value={today.totalCents}
+          caption={`${today.count} ${today.count === 1 ? "entry" : "entries"} so far`}
           className="order-4 lg:order-none"
         />
         <FigureBlock
